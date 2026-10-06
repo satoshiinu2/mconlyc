@@ -1,0 +1,37 @@
+---
+# ベースとなるスタイル（Google, LLVM, Chromium, Mozilla, WebKit から選択可能）
+BasedOnStyle: Google
+
+# インデントの幅（スペースの数）
+IndentWidth: 4
+
+# タブの代わりにスペースを使用するか
+UseTab: Never
+
+# 1行の最大文字数
+ColumnLimit: 100
+
+# ポインタや参照の記号（* や &）の寄せ方（Left: int* p, Right: int *p, Middle: int * p）
+PointerAlignment: Right
+
+# アクセス修飾子（public:, private: 等）のインデントを少し戻す設定
+AccessModifierOffset: -3
+
+# 中括弧（ブレース）の配置ルール
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  BeforeElse: false
+  BeforeWhile: false
+
+# インクルードガードやヘッダーの自動ソート
+SortIncludes: CaseSensitive
+
+# 空の関数やループを1行にまとめるか
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+
