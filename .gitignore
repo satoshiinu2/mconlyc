@@ -12,6 +12,8 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 build/
+build-release/
+dist/
 cmake-build-*/
 
 # Build artifacts

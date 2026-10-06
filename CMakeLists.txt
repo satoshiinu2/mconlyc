@@ -27,3 +27,7 @@ endif()
 add_executable(mconlyc ${WIN32_EXE_FLAG} ${COMMON_SOURCES} ${OS_SPECIFIC_SOURCES})
 
 target_include_directories(mconlyc PRIVATE src)
+
+install(TARGETS mconlyc
+    RUNTIME DESTINATION .
+)
