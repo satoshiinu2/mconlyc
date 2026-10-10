@@ -5,7 +5,7 @@
 
 #include "asset_ids.h"
 #include "core/bmp.h"
-#include "shader.h"
+#include "render/shader.h"
 
 void game_state_init(GameState *state) {
     state->basic_shader = create_basic_shader();

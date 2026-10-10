@@ -66,8 +66,9 @@ typedef struct {
         .vertex_out_size = v_out_size, .uses_clip_space = uses_clip,                             \
     }
 
-void render_pixel(RenderManager *mgr, UiVec2 p, pixel_t pixel);
 void render_triangle(RenderManager *mgr, Shader *shader, uniform_t uniforms, float near,
+                     const vertex_in_t v1, const vertex_in_t v2, const vertex_in_t v3);
+
                      vertex_in_t v1, vertex_in_t v2, vertex_in_t v3);
 
 void raster(RenderManager *mgr, Shader *shader, uniform_t uniforms, float x1, float y1, float w1,

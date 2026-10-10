@@ -1,15 +1,13 @@
 #include "render.h"
 
 #include <math.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "math.h"
+#include "min.h"
 #include "vec.h"
-
-void render_pixel(RenderManager *mgr, UiVec2 p, pixel_t pixel) {
-    mgr->pixel_buffer[mgr->width * p.x + p.y] = pixel;
-}
 
 typedef struct {
     float x;
@@ -45,7 +43,7 @@ static void rasterize_polygon(RenderManager *mgr, Shader *shader, uniform_t unif
                               ClipVertex polygon[4], size_t polygon_len);
 
 void render_triangle(RenderManager *mgr, Shader *shader, uniform_t uniforms, float near,
-                     vertex_in_t v1, vertex_in_t v2, vertex_in_t v3) {
+                     const vertex_in_t v1, const vertex_in_t v2, const vertex_in_t v3) {
     void *vo1 = malloc(shader->vertex_out_size);
     void *vo2 = malloc(shader->vertex_out_size);
     void *vo3 = malloc(shader->vertex_out_size);
