@@ -34,6 +34,5 @@ typedef struct {
     const Mat4 *mvp;
 } TerrainUniforms;
 
-Shader create_basic_shader();
-
-Shader create_terrain_shader();
+DECLARE_RENDER_ELEMENTS(basic, BasicVertexIn, BasicUniforms)
+DECLARE_RENDER_ELEMENTS(terrain, TerrainVertexIn, TerrainUniforms)

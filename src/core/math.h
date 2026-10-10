@@ -36,6 +36,13 @@ static inline Vec4 rgba8_to_vec4(const pixel_t p) {
     };
 }
 
+static inline pixel_t vec4_to_rgba8(const Vec4 v) {
+    return ((uint32_t)(v.x * 255.0f + 0.5f) & 255u) |
+           (((uint32_t)(v.y * 255.0f + 0.5f) & 255u) << 8) |
+           (((uint32_t)(v.z * 255.0f + 0.5f) & 255u) << 16) |
+           (((uint32_t)(v.w * 255.0f + 0.5f) & 255u) << 24);
+}
+
 static inline Vec3 vec3_add(const Vec3 a, const Vec3 b) {
     return (Vec3){a.x + b.x, a.y + b.y, a.z + b.z};
 }

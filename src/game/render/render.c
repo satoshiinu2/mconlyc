@@ -4,7 +4,6 @@
 #include "game/state.h"
 #include "shader.h"
 
-
 static const TerrainVertexIn cubeVertices[] = {
     {{-1, -1, -1}, {0, 1}},  //
     {{1, -1, -1}, {1, 1}},   //
@@ -41,6 +40,6 @@ void render_chunks(Window *window) {
 
     const size_t cubeIndexCount = sizeof(cubeIndices) / sizeof(cubeIndices[0]);
 
-    render_elements(&window->render_mgr, &state->terrain_shader, (uniform_t)&uniforms, NEAR_VAL,
-                    (const vertex_in_t *)cubeVertices, sizeof(cubeVertices[0]),cubeIndices, cubeIndexCount);
+    render_elements_terrain(&window->render_mgr, &uniforms, NEAR_VAL, cubeVertices, cubeIndices,
+                            cubeIndexCount);
 }

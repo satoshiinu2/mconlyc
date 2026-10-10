@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bmp.h"
 #include "min.h"
 
 typedef struct {
@@ -20,10 +19,6 @@ typedef struct {
     uint16_t biBitCount;
     uint32_t biCompression;
 } BMPHeader;
-
-static inline pixel_t pack_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-    return (pixel_t)((uint32_t)r | ((uint32_t)g << 8) | ((uint32_t)b << 16) | ((uint32_t)a << 24));
-}
 
 static uint16_t read_u16_le(const uint8_t bytes[4]) {
     return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
