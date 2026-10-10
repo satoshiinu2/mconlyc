@@ -43,7 +43,7 @@ static void rasterize_polygon(RenderManager *mgr, Shader *shader, uniform_t unif
                               ClipVertex polygon[4], size_t polygon_len);
 
 void render_triangle(RenderManager *mgr, Shader *shader, uniform_t uniforms, float near,
-                     const vertex_in_t v1, const vertex_in_t v2, const vertex_in_t v3) {
+                     vertex_in_t v1, vertex_in_t v2, vertex_in_t v3) {
     void *vo1 = malloc(shader->vertex_out_size);
     void *vo2 = malloc(shader->vertex_out_size);
     void *vo3 = malloc(shader->vertex_out_size);
@@ -204,6 +204,18 @@ static void rasterize_polygon(RenderManager *mgr, Shader *shader, void *uniforms
     // ownedならfree
     for (size_t i = 0; i < polygon_len; i++) {
         if (polygon[i].owned) free(polygon[i].vertex_out);
+    }
+}
+
+void render_elements(RenderManager *mgr, Shader *shader, uniform_t uniforms, float near,
+                     vertex_in_t *vertices, size_t stride, const int *indices, size_t indexCount) {
+    const char *base = (const char *)vertices;
+
+    for (size_t i = 0; i + 2 < indexCount; i += 3) {
+        render_triangle(mgr, shader, uniforms, near,
+                        (vertex_in_t)(base + (size_t)indices[i] * stride),
+                        (vertex_in_t)(base + (size_t)indices[i + 1] * stride),
+                        (vertex_in_t)(base + (size_t)indices[i + 2] * stride));
     }
 }
 

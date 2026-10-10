@@ -67,9 +67,11 @@ typedef struct {
     }
 
 void render_triangle(RenderManager *mgr, Shader *shader, uniform_t uniforms, float near,
-                     const vertex_in_t v1, const vertex_in_t v2, const vertex_in_t v3);
-
                      vertex_in_t v1, vertex_in_t v2, vertex_in_t v3);
+
+void render_elements(RenderManager *mgr, Shader *shader, uniform_t uniforms, float near,
+                     vertex_in_t *cubeVertices, size_t stride, const int *cubeIndices,
+                     size_t cubeIndexCount);
 
 void raster(RenderManager *mgr, Shader *shader, uniform_t uniforms, float x1, float y1, float w1,
             float x2, float y2, float w2, float x3, float y3, float w3, vertex_out_t vo1,
