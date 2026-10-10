@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdbool.h>
 
+#include "bmp.h"
+#include "math.h"
 #include "min.h"
 
 typedef struct {
@@ -56,13 +58,12 @@ typedef struct {
         fields                                                                           \
     }
 
-#define CREATE_SHADER(name, vertex_fn, fragment_fn, interp_fn, v_in_size,          \
-                      v_out_size, uses_clip)                                        \
-    (Shader) {                                                                          \
-        .vertex_shader = (void (*)(vertex_in_t, uniform_t, vertex_out_t))vertex_fn,     \
-        .fragment_shader = (Vec4 (*)(vertex_out_t, float depth, uniform_t))fragment_fn, \
-        .interpolate_vertex_out = interp_fn, .vertex_in_size = v_in_size,          \
-        .vertex_out_size = v_out_size, .uses_clip_space = uses_clip,               \
+#define CREATE_SHADER(name, vertex_fn, fragment_fn, interp_fn, v_in_size, v_out_size, uses_clip) \
+    (Shader) {                                                                                   \
+        .vertex_shader = (void (*)(vertex_in_t, uniform_t, vertex_out_t))vertex_fn,              \
+        .fragment_shader = (Vec4 (*)(vertex_out_t, float depth, uniform_t))fragment_fn,          \
+        .interpolate_vertex_out = interp_fn, .vertex_in_size = v_in_size,                        \
+        .vertex_out_size = v_out_size, .uses_clip_space = uses_clip,                             \
     }
 
 void render_pixel(RenderManager *mgr, UiVec2 p, pixel_t pixel);
@@ -75,3 +76,5 @@ void raster(RenderManager *mgr, Shader *shader, uniform_t uniforms, float x1, fl
 
 void resize_depth_buffer(RenderManager *mgr);
 void clear_render_buffers(RenderManager *mgr);
+
+Vec4 texture_sample_nearest(const Texture *t, float u, float v);

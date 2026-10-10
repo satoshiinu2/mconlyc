@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mem.h"
-#include "min.h"
+#include "math.h"
 #include "vec.h"
 
 void render_pixel(RenderManager *mgr, UiVec2 p, pixel_t pixel) {
@@ -220,4 +219,24 @@ void clear_render_buffers(RenderManager *mgr) {
     size_t n = (size_t)mgr->width * mgr->height;
     memset(mgr->depth_buffer, 0, n * sizeof(*mgr->depth_buffer));
     memset(mgr->pixel_buffer, 0, n * sizeof(*mgr->pixel_buffer));
+}
+
+// direct3d like uv
+Vec4 texture_sample_nearest(const Texture *t, float u, float v) {
+    if (t->pixels == NULL) {
+        bool f = (u > 0.5) ^ (v > 0.5);
+        return f ? (Vec4){1, 0, 1, 1} : (Vec4){0, 0, 0, 1};
+    }
+
+    // repeat ラップ
+    u -= floorf(u);
+    v -= floorf(v);
+
+    int x = (int)(u * t->width);
+    int y = (int)(v * t->height);
+    if (x >= t->width) x = t->width - 1;
+    if (y >= t->height) y = t->height - 1;
+
+    pixel_t p = t->pixels[y * t->width + x];
+    return rgba8_to_vec4(p);
 }

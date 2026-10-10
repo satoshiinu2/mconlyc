@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 project(MultiPlatformApp C)
 
+include(cmake/embed.cmake)
+
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE COMMON_SOURCES "src/*.c")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # OSごとにエントリーポイント違う
 if(WIN32)
@@ -24,9 +29,24 @@ else()
     message(FATAL_ERROR "Unsupported Operating System: ${CMAKE_SYSTEM_NAME}")
 endif()
 
-add_executable(mconlyc ${WIN32_EXE_FLAG} ${COMMON_SOURCES} ${OS_SPECIFIC_SOURCES})
+embed_assets(ASSET_SOURCES "${CMAKE_SOURCE_DIR}/assets")
 
-target_include_directories(mconlyc PRIVATE src)
+add_executable(mconlyc ${WIN32_EXE_FLAG}
+    ${COMMON_SOURCES}
+    ${OS_SPECIFIC_SOURCES}
+    ${ASSET_SOURCES}
+)
+
+target_include_directories(mconlyc PRIVATE
+    src
+    ${CMAKE_BINARY_DIR}/embedded
+)
+
+target_compile_definitions(mconlyc PRIVATE EMBED_ASSETS)
+
+if(UNIX)
+    target_link_libraries(mconlyc PRIVATE m)
+endif()
 
 install(TARGETS mconlyc
     RUNTIME DESTINATION .

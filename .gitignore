@@ -12,6 +12,7 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 build/
+build-debug/
 build-release/
 dist/
 cmake-build-*/

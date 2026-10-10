@@ -1,0 +1,1 @@
+#define NEAR_VAL 0.01f
