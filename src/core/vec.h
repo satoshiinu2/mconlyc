@@ -6,29 +6,29 @@
 
 #define VEC(T)      \
     struct {        \
-        T *ptr;     \
+        T *data;    \
         size_t len; \
         size_t cap; \
-    }  // capが-1ならfrozen
+    } 
 
 #define VEC_INIT {0}
 
-#define VEC_PUSH(vec, val)                                                         \
-    do {                                                                           \
-        if ((vec).len >= (vec).cap) {                                              \
-            (vec).cap = (vec).cap ? (vec).cap * 2 : 8;                             \
-            (vec).ptr = realloc_or_exit((vec).ptr, (vec).cap * sizeof *(vec).ptr); \
-        }                                                                          \
-        (vec).ptr[(vec).len++] = (val);                                            \
+#define VEC_PUSH(vec, val)                                                            \
+    do {                                                                              \
+        if ((vec).len >= (vec).cap) {                                                 \
+            (vec).cap = (vec).cap ? (vec).cap * 2 : 8;                                \
+            (vec).data = realloc_or_exit((vec).data, (vec).cap * sizeof *(vec).data); \
+        }                                                                             \
+        (vec).data[(vec).len++] = (val);                                              \
     } while (0)
 
-#define VEC_GET(vec, index) (*(assert((size_t)(index) < (vec).len), &(vec).ptr[(index)]))
+#define VEC_GET(vec, index) (*(assert((size_t)(index) < (vec).len), &(vec).data[(index)]))
 
 #define VEC_FREE(vec)              \
     do {                           \
-        free((vec).ptr);           \
-        (vec).ptr = NULL;          \
+        free((vec).data);          \
+        (vec).data = NULL;         \
         (vec).len = (vec).cap = 0; \
     } while (0)
 
-#define VEC_FREEZE(vec) ((vec).cap = -1, (vec).ptr)
+#define VEC_CLEAR(vec) ((vec).len = 0)
