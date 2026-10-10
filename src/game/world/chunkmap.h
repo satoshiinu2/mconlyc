@@ -11,7 +11,7 @@
 #define CHUNK_MAP_LOAD_DENOMINATOR 4
 
 typedef struct {
-    int32_t x, y, z;
+    int64_t x, y, z;
 } ChunkPos;
 
 typedef struct ChunkMapEntry ChunkMapEntry;
@@ -28,8 +28,9 @@ typedef struct {
     size_t cap;
 } ChunkHashMap;
 
-ChunkHashMap *chunk_hash_map_new(size_t cap);
+ChunkHashMap chunk_hash_map_new(size_t cap);
 void chunk_hash_map_insert(ChunkHashMap *map, ChunkPos key, Chunk *value);
 Chunk *chunk_hash_map_get(const ChunkHashMap *map, ChunkPos key);
 bool chunk_hash_map_remove(ChunkHashMap *map, ChunkPos key);
+Chunk *chunk_hash_map_take(ChunkHashMap *map, ChunkPos key);
 void chunk_hash_map_free(ChunkHashMap *map);

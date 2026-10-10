@@ -6,11 +6,16 @@
 #include "core/render.h"
 #include "core/window.h"
 #include "render/render.h"
+#include "world/world.h"
 
 void game_init(Window *window) {
     window->state = malloc_or_exit(sizeof(GameState));
 
     game_state_init(window->state);
+
+    window->state->world = malloc_or_exit(sizeof(World));
+
+    world_init(window->state->world);
 }
 
 void game_destroy(Window *window) {

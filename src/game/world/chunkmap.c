@@ -61,19 +61,15 @@ static void chunk_hash_map_resize(ChunkHashMap *map, size_t new_count) {
     map->cap = new_count;
 }
 
-ChunkHashMap *chunk_hash_map_new(size_t cap) {
+ChunkHashMap chunk_hash_map_new(size_t cap) {
     assert(cap > 0);
 
-    ChunkHashMap *map = malloc_or_exit(sizeof *map);
+    ChunkHashMap map = {0};
 
-    map->entries = calloc(cap, sizeof *map->entries);
-    if (!map->entries) {
-        free(map);
-        abort();
-    }
+    map.entries = calloc_or_exit(cap, sizeof *map.entries);
 
-    map->cap = cap;
-    map->count = 0;
+    map.cap = cap;
+    map.count = 0;
 
     return map;
 }
@@ -86,8 +82,8 @@ void chunk_hash_map_insert(ChunkHashMap *map, ChunkPos key, Chunk *value) {
     // Update existing keys
     for (ChunkMapEntry *entry = map->entries[index]; entry != NULL; entry = entry->next) {
         if (chunk_pos_equal(entry->key, key)) {
+            free(entry->value);
             entry->value = value;
-            return;
         }
     }
 
@@ -125,7 +121,7 @@ Chunk *chunk_hash_map_get(const ChunkHashMap *map, ChunkPos key) {
     return NULL;
 }
 
-bool chunk_hash_map_remove(ChunkHashMap *map, ChunkPos key) {
+Chunk *chunk_hash_map_take(ChunkHashMap *map, ChunkPos key) {
     assert(map != NULL);
     assert(map->cap > 0);
 
@@ -136,19 +132,26 @@ bool chunk_hash_map_remove(ChunkHashMap *map, ChunkPos key) {
     while (*entry) {
         if (chunk_pos_equal((*entry)->key, key)) {
             ChunkMapEntry *removed = *entry;
+            Chunk *old = removed->value;
 
             *entry = removed->next;
 
             free(removed);
             map->count--;
 
-            return true;
+            return old;
         }
 
         entry = &(*entry)->next;
     }
 
-    return false;
+    return NULL;
+}
+
+bool chunk_hash_map_remove(ChunkHashMap *map, ChunkPos key) {
+    Chunk *old = chunk_hash_map_take(map, key);
+    free(old);
+    return old != NULL;
 }
 
 void chunk_hash_map_free(ChunkHashMap *map) {
@@ -161,6 +164,7 @@ void chunk_hash_map_free(ChunkHashMap *map) {
 
         while (entry) {
             ChunkMapEntry *next = entry->next;
+            free(entry->value);
             free(entry);
             entry = next;
         }

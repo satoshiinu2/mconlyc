@@ -12,3 +12,4 @@ void game_state_init(GameState *state) {
         printf("Failed to load texture\n");
     }
 }
+

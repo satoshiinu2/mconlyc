@@ -17,6 +17,12 @@ typedef struct {
 } Vec3;
 
 typedef struct {
+    double x;
+    double y;
+    double z;
+} Vec3d;
+
+typedef struct {
     float x;
     float y;
     float z;

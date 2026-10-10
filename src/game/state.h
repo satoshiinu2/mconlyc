@@ -2,11 +2,14 @@
 
 #include "core/bmp.h"
 #include "core/key.h"
+#include "world/world.h"
 
 typedef struct {
     KeyConfig key_config;
 
     Texture terrain_texture;
+
+    World *world;
 
 } GameState;
 
