@@ -10,16 +10,21 @@
 
 void game_init(Window *window) {
     window->state = malloc_or_exit(sizeof(GameState));
-
-    game_state_init(window->state);
+    window->state->world = NULL;
 
     window->state->world = malloc_or_exit(sizeof(World));
-
     world_init(window->state->world);
+
+    game_state_init(window->state);
 }
 
 void game_destroy(Window *window) {
     if (window->state) {
+        if (window->state->world) {
+            world_destroy(window->state->world);
+            free(window->state->world);
+        }
+
         free(window->state);
     }
 }

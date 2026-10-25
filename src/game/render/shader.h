@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
     Vec3 position;
     Vec2 uv;
+    Vec3 color;
 } TerrainVertexIn;
 
 typedef struct {

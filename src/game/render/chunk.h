@@ -28,4 +28,4 @@ static inline size_t chunk_index(int64_t x, int64_t y, int64_t z) {
 }
 
 void render_mesh_chunk(World *world, ChunkPos pos);
-block_t chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z);
+Blocks chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z);

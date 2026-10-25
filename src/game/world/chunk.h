@@ -4,6 +4,7 @@
 
 #include "core/vec.h"
 #include "game/render/shader.h"
+#include "game/world/blocks.h"
 
 #define CHUNK_SIZE 16
 #define CHUNK_DATA_SIZE CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
@@ -19,7 +20,7 @@ typedef enum {
 } ChunkState;
 
 typedef struct {
-    block_t *blocks;
+    Blocks *blocks;
 
     VEC(TerrainVertexIn) vertices;
     VEC(int) indices;

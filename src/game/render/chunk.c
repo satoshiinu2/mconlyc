@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "core/math.h"
 #include "core/window.h"
 #include "game/state.h"
 #include "game/world/blocks.h"
@@ -11,6 +12,52 @@
 #include "game/world/world.h"
 #include "render.h"
 #include "shader.h"
+
+#define ATLAS_SIZE 16.0f
+typedef struct {
+    // 隣接方向
+    int dx, dy, dz;
+    // 4頂点 (外から見て CCW)
+    Vec3 v[4];
+    float shade;
+} FaceDef;
+
+static const FaceDef FACES[6] = {
+    // +X
+    {+1, 0, 0, {{1, 0, 1}, {1, 0, 0}, {1, 1, 0}, {1, 1, 1}}, 0.8f},
+    // -X
+    {-1, 0, 0, {{0, 0, 0}, {0, 0, 1}, {0, 1, 1}, {0, 1, 0}}, 0.8f},
+    // +Y (上)
+    {0, +1, 0, {{0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}}, 1.0f},
+    // -Y (下)
+    {0, -1, 0, {{0, 0, 0}, {1, 0, 0}, {1, 0, 1}, {0, 0, 1}}, 0.5f},
+    // +Z
+    {0, 0, +1, {{0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}}, 0.9f},
+    // -Z
+    {0, 0, -1, {{1, 0, 0}, {0, 0, 0}, {0, 1, 0}, {1, 1, 0}}, 0.9f},
+};
+
+// 4頂点に対応する UV (タイル内 0..1)
+static const float FACE_UV[4][2] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+
+static void push_face(Chunk *chunk, int x, int y, int z, const FaceDef *f, float tile_u,
+                      float tile_v, float tile_size, Vec3 color) {
+    uint32_t base = (uint32_t)chunk->vertices.len;
+
+    for (int i = 0; i < 4; i++) {
+        TerrainVertexIn vtx = {
+            .position = {x + f->v[i].x, y + f->v[i].y, z + f->v[i].z},
+            .uv = {tile_u + FACE_UV[i][0] * tile_size, tile_v + FACE_UV[i][1] * tile_size},
+            .color = {f->shade * color.x, f->shade * color.y, f->shade * color.z},
+        };
+        VEC_PUSH(chunk->vertices, vtx);
+    }
+
+    int idx[6] = {base, base + 1, base + 2, base, base + 2, base + 3};
+    for (int i = 0; i < 6; i++) {
+        VEC_PUSH(chunk->indices, idx[i]);
+    }
+}
 
 void render_mesh_chunk(World *world, ChunkPos pos) {
     ChunkCache cache = gen_chunkcache(world, pos.x - 1, pos.y - 1, pos.z - 1, 3, 3, 3);
@@ -22,11 +69,25 @@ void render_mesh_chunk(World *world, ChunkPos pos) {
     for (size_t y = 0; y < CHUNK_SIZE; y++) {
         for (size_t z = 0; z < CHUNK_SIZE; z++) {
             for (size_t x = 0; x < CHUNK_SIZE; x++) {
+                for (Faces face = 0; face < FACE_COUNT; face++) {
+                    const FaceDef *f = &FACES[face];
+
+                    Blocks nb = chunkcache_get_block(&cache, (int64_t)pos.x * CHUNK_SIZE + x,
+                                                     (int64_t)pos.y * CHUNK_SIZE + y,
+                                                     (int64_t)pos.z * CHUNK_SIZE + z);
+
+                    if (BLOCK_DEFS[nb].opaque) continue;  // 　埋まっている
+
+                    float tile_u = 0.0f, tile_v = 0.0f, tile_size = 1.0f / ATLAS_SIZE;
+
+                    Vec3 color = {1.0f, 1.0f, 1.0f};
+                    push_face(chunk, x, y, z, f, tile_u, tile_v, tile_size, color);
+                }
             }
         }
-    }
 
-    free(cache.chunks);
+        free(cache.chunks);
+    }
 }
 
 void render_chunk(Window *window, Chunk *chunk) {
@@ -72,7 +133,7 @@ ChunkCache gen_chunkcache(World *world, int64_t x_start, int64_t y_start, int64_
     Chunk **chunks = malloc_or_exit(count * sizeof(*chunks));
 
     for (int64_t y = 0; y < height; y++) {
-    for (int64_t z = 0; z < depth; z++) {
+        for (int64_t z = 0; z < depth; z++) {
             for (int64_t x = 0; x < width; x++) {
                 ChunkPos pos = {
                     .x = (int32_t)(x_start + x),
@@ -98,7 +159,7 @@ ChunkCache gen_chunkcache(World *world, int64_t x_start, int64_t y_start, int64_
     };
 }
 
-block_t chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z) {
+Blocks chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z) {
     int64_t chunk_x = floor_div16(x);
     int64_t chunk_y = floor_div16(y);
     int64_t chunk_z = floor_div16(z);
@@ -122,7 +183,7 @@ block_t chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z)
 
     size_t b_index = chunk_index(in_x, in_y, in_z);
 
-    block_t block = chunk->blocks[b_index];
+    Blocks block = chunk->blocks[b_index];
 
     return block;
 }

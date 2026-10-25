@@ -164,7 +164,7 @@ void chunk_hash_map_free(ChunkHashMap *map) {
 
         while (entry) {
             ChunkMapEntry *next = entry->next;
-            free(entry->value);
+            chunk_destroy(entry->value);
             free(entry);
             entry = next;
         }

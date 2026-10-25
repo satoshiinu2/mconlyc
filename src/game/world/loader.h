@@ -4,7 +4,7 @@
 
 typedef VEC(ChunkPos) ChunkRequestQueue;
 
-typedef struct {
+struct ChunkLoader {
     ChunkRequestQueue requests;
     size_t request_head;
 
@@ -15,7 +15,7 @@ typedef struct {
 
     size_t gen_budget;
     size_t mesh_budget;
-} ChunkLoader;
+};
 
 ChunkLoader *chunk_loader_new(World *world);
 
