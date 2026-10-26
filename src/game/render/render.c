@@ -36,10 +36,16 @@ void render_chunks(Window *window) {
 
     GameState *state = window->state;
 
-    TerrainUniforms uniforms = {.texture = &state->terrain_texture, .mvp = &mvp};
+    ChunkHashMapIterator iter = {0};
+    while (chunk_hash_map_iter_next(&state->world->chunks, &iter)) {
+        Chunk *chunk = iter.current->value;
+        TerrainUniforms uniforms = {.texture = &state->terrain_texture, .mvp = &mvp};
 
-    const size_t cubeIndexCount = sizeof(cubeIndices) / sizeof(cubeIndices[0]);
+        TerrainVertexIn *vertices = chunk->vertices.data;
+        int *indices = chunk->indices.data;
+        size_t index_count = chunk->indices.len;
 
-    render_elements_terrain(&window->render_mgr, &uniforms, NEAR_VAL, cubeVertices, cubeIndices,
-                            cubeIndexCount);
+        render_elements_terrain(&window->render_mgr, &uniforms, NEAR_VAL, vertices, indices,
+                                index_count);
+    }
 }

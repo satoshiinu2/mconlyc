@@ -21,8 +21,6 @@ ChunkLoader *chunk_loader_new(World *world);
 
 void chunk_loader_update(ChunkLoader *loader, World *world, Vec3d center);
 
-bool chunk_loader_request(ChunkLoader *loader, World *world, ChunkPos pos);
-
 void chunk_loader_process(ChunkLoader *loader, World *world);
 
 void chunk_loader_unload_distant(ChunkLoader *loader, World *world);

@@ -173,3 +173,30 @@ void chunk_hash_map_free(ChunkHashMap *map) {
     free(map->entries);
     free(map);
 }
+
+Chunk *chunk_hash_map_iter_next(ChunkHashMap *map, ChunkHashMapIterator *iter) {
+    if (!map || !iter) {
+        return NULL;
+    }
+
+    while (iter->index < map->cap) {
+        ChunkMapEntry *entry = map->entries[iter->index];
+
+        if (entry) {
+            if (iter->current == NULL) {
+                iter->current = entry;
+            } else {
+                iter->current = iter->current->next;
+            }
+
+            if (iter->current) {
+                return iter->current->value;
+            }
+        }
+
+        iter->index++;
+        iter->current = NULL;
+    }
+
+    return NULL;
+}

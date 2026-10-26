@@ -49,6 +49,11 @@ target_include_directories(mconlyc PRIVATE
 
 target_compile_definitions(mconlyc PRIVATE EMBED_ASSETS)
 
+target_compile_definitions(mconlyc PRIVATE
+    EMBED_ASSETS
+    $<$<CONFIG:Debug>:DEBUG>
+)
+
 if(UNIX)
     target_link_libraries(mconlyc PRIVATE m)
 endif()

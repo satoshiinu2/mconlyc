@@ -6,7 +6,6 @@
 #include "game/world/chunkmap.h"
 #include "world.h"
 
-// Static stub functions
 static void generate_chunk(World *world, Chunk *chunk, ChunkPos pos) {
     if (!chunk) return;
     if (chunk->state != CHUNK_REQUESTED) return;
@@ -41,8 +40,7 @@ static void mesh_chunk(World *world, Chunk *chunk, ChunkPos pos) {
     }
 }
 
-// Process queues
-void process_generation_queue(ChunkLoader *loader, World *world, size_t budget) {
+static void process_generation_queue(ChunkLoader *loader, World *world, size_t budget) {
     size_t processed = 0;
     while (processed < budget && loader->request_head < loader->requests.len) {
         ChunkPos pos = loader->requests.data[loader->request_head];
@@ -55,7 +53,7 @@ void process_generation_queue(ChunkLoader *loader, World *world, size_t budget) 
     }
 }
 
-void process_mesh_queue(ChunkLoader *loader, World *world, size_t budget) {
+static void process_mesh_queue(ChunkLoader *loader, World *world, size_t budget) {
     size_t processed = 0;
     while (processed < budget && loader->request_head < loader->requests.len) {
         ChunkPos pos = loader->requests.data[loader->request_head];
@@ -68,24 +66,7 @@ void process_mesh_queue(ChunkLoader *loader, World *world, size_t budget) {
     }
 }
 
-void chunk_loader_update(ChunkLoader *loader, World *world, Vec3d center) {
-    ChunkLoader *l = loader;
-    for (int64_t z = center.z - l->rd_z; z <= center.z + l->rd_z; z++) {
-        for (int64_t y = center.y - l->rd_y; y <= center.y + l->rd_y; y++) {
-            for (int64_t x = center.x - l->rd_x; x <= center.x + l->rd_x; x++) {
-                ChunkPos pos = {x, y, z};
-
-                if (chunk_hash_map_get(&world->chunks, pos)) {
-                    continue;
-                }
-
-                chunk_loader_request(loader, world, pos);
-            }
-        }
-    }
-}
-
-bool chunk_loader_request(ChunkLoader *loader, World *world, ChunkPos pos) {
+static bool chunk_loader_request_chunk(ChunkLoader *loader, World *world, ChunkPos pos) {
     // Already requested, generating, or loaded.
     if (chunk_hash_map_get(&world->chunks, pos) != NULL) {
         return true;
@@ -103,6 +84,57 @@ bool chunk_loader_request(ChunkLoader *loader, World *world, ChunkPos pos) {
     return true;
 }
 
+static void chunk_loader_unload_distant(ChunkLoader *loader, World *world) {
+    // Unload chunks that are far from the loader's center
+    // Use hysteresis to avoid frequent load/unload cycles
+    const int64_t hysteresis = 2;
+    int64_t min_x = loader->center.x - (loader->rd_x + hysteresis);
+    int64_t max_x = loader->center.x + (loader->rd_x + hysteresis);
+    int64_t min_y = loader->center.y - (loader->rd_y + hysteresis);
+    int64_t max_y = loader->center.y + (loader->rd_y + hysteresis);
+    int64_t min_z = loader->center.z - (loader->rd_z + hysteresis);
+    int64_t max_z = loader->center.z + (loader->rd_z + hysteresis);
+
+    VEC(ChunkPos) to_unload = VEC_INIT(ChunkPos);
+
+    ChunkHashMapIterator iter = {0};
+    while (chunk_hash_map_iter_next(&world->chunks, &iter)) {
+        ChunkPos pos = iter.current->key;
+        if (pos.x < min_x || pos.x > max_x || pos.y < min_y || pos.y > max_y || pos.z < min_z ||
+            pos.z > max_z) {
+            // This chunk is distant
+            VEC_PUSH(to_unload, pos);
+        }
+    }
+
+    // unload all not needed
+    for (size_t i = 0; i < to_unload.len; i++) {
+        ChunkPos pos = to_unload.data[i];
+        Chunk *chunk = chunk_hash_map_take(&world->chunks, pos);
+        if (chunk) {
+            chunk_destroy(chunk);
+        }
+    }
+
+    free(to_unload.data);
+}
+
+void chunk_loader_update(ChunkLoader *loader, World *world, Vec3d center) {
+    ChunkLoader *l = loader;
+    for (int64_t z = center.z - l->rd_z; z <= center.z + l->rd_z; z++) {
+        for (int64_t y = center.y - l->rd_y; y <= center.y + l->rd_y; y++) {
+            for (int64_t x = center.x - l->rd_x; x <= center.x + l->rd_x; x++) {
+                ChunkPos pos = {x, y, z};
+
+                if (chunk_hash_map_get(&world->chunks, pos)) {
+                    continue;
+                }
+
+                chunk_loader_request_chunk(loader, world, pos);
+            }
+        }
+    }
+}
 void chunk_loader_process(ChunkLoader *loader, World *world) {
     process_generation_queue(loader, world, loader->gen_budget);
 
@@ -110,12 +142,11 @@ void chunk_loader_process(ChunkLoader *loader, World *world) {
 }
 
 ChunkLoader *chunk_loader_new(World *world) {
-    (void)world;  // unused for now, but we could set default radii from world settings if needed
     ChunkLoader *loader = malloc(sizeof(*loader));
     if (!loader) return NULL;
 
     // Initialize vector
-    loader->requests = (ChunkRequestQueue)VEC_INIT;
+    loader->requests = (ChunkRequestQueue)VEC_INIT(ChunkRequestQueue);
 
     loader->request_head = 0;
 
@@ -137,48 +168,4 @@ void chunk_loader_free(ChunkLoader *loader) {
     if (!loader) return;
     free(loader->requests.data);
     free(loader);
-}
-
-void chunk_loader_unload_distant(ChunkLoader *loader, World *world) {
-    // Unload chunks that are far from the loader's center
-    // Use hysteresis to avoid frequent load/unload cycles
-    const int64_t hysteresis = 2;
-    int64_t min_x = loader->center.x - (loader->rd_x + hysteresis);
-    int64_t max_x = loader->center.x + (loader->rd_x + hysteresis);
-    int64_t min_y = loader->center.y - (loader->rd_y + hysteresis);
-    int64_t max_y = loader->center.y + (loader->rd_y + hysteresis);
-    int64_t min_z = loader->center.z - (loader->rd_z + hysteresis);
-    int64_t max_z = loader->center.z + (loader->rd_z + hysteresis);
-
-    // Temporary list of chunks to unload
-    VEC(ChunkPos) to_unload;
-    to_unload.len = 0;
-    to_unload.cap = 0;
-    to_unload.data = NULL;
-
-    // Iterate over all chunks in the world's hashmap
-    for (size_t i = 0; i < world->chunks.cap; i++) {
-        ChunkMapEntry *entry = world->chunks.entries[i];
-        while (entry) {
-            ChunkPos pos = entry->key;
-            if (pos.x < min_x || pos.x > max_x || pos.y < min_y || pos.y > max_y || pos.z < min_z ||
-                pos.z > max_z) {
-                // This chunk is distant, mark for unloading
-                VEC_PUSH(to_unload, pos);
-            }
-            entry = entry->next;
-        }
-    }
-
-    // Unload all marked chunks
-    for (size_t i = 0; i < to_unload.len; i++) {
-        ChunkPos pos = to_unload.data[i];
-        Chunk *chunk = chunk_hash_map_take(&world->chunks, pos);
-        if (chunk) {
-            chunk_destroy(chunk);
-        }
-    }
-
-    // Free temporary vector
-    free(to_unload.data);
 }
