@@ -15,7 +15,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(WIN32)
     message(STATUS "Target OS: Windows")
     set(OS_SPECIFIC_SOURCES src/platform/win32.c)
-    set(WIN32_EXE_FLAG WIN32)
 
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     message(STATUS "Target OS: Linux")
@@ -31,11 +30,17 @@ endif()
 
 embed_assets(ASSET_SOURCES "${CMAKE_SOURCE_DIR}/assets")
 
-add_executable(mconlyc ${WIN32_EXE_FLAG}
+add_executable(mconlyc
     ${COMMON_SOURCES}
     ${OS_SPECIFIC_SOURCES}
     ${ASSET_SOURCES}
 )
+
+if(WIN32)
+    set_target_properties(mconlyc PROPERTIES
+        WIN32_EXECUTABLE "$<NOT:$<CONFIG:Debug>>"
+    )
+endif()
 
 target_include_directories(mconlyc PRIVATE
     src
