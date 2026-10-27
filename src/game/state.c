@@ -7,9 +7,8 @@
 #include "core/bmp.h"
 
 void game_state_init(GameState *state) {
-    const Asset *stone_ph = asset_get(ASSET_STONE_BMP);
+    const Asset *stone_ph = asset_get(ASSET_TERRAIN_BMP);
     if (parse_bitmap(stone_ph, &state->terrain_texture) != EXIT_SUCCESS) {
         printf("Failed to load texture\n");
     }
 }
-

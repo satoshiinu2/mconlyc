@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-
+#include <stdint.h>
 
 typedef enum {
     BLOCK_AIR = 0,
@@ -14,6 +14,7 @@ typedef enum {
 typedef struct {
     Blocks id;
     const char *name;
+    const uint32_t icon[6];
     bool opaque;
     bool solid;
 } BlockDef;

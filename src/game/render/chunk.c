@@ -69,12 +69,14 @@ void render_mesh_chunk(World *world, ChunkPos pos) {
     for (size_t y = 0; y < CHUNK_SIZE; y++) {
         for (size_t z = 0; z < CHUNK_SIZE; z++) {
             for (size_t x = 0; x < CHUNK_SIZE; x++) {
+                if (chunk->blocks[chunk_index(x, y, z)] == BLOCK_AIR) continue;
                 for (Faces face = 0; face < FACE_COUNT; face++) {
                     const FaceDef *f = &FACES[face];
 
-                    Blocks nb = chunkcache_get_block(&cache, (int64_t)pos.x * CHUNK_SIZE + x,
-                                                     (int64_t)pos.y * CHUNK_SIZE + y,
-                                                     (int64_t)pos.z * CHUNK_SIZE + z);
+                    Blocks nb = chunkcache_get_block(&cache,
+                        (int64_t)pos.x * CHUNK_SIZE + (int64_t)x + f->dx,
+                        (int64_t)pos.y * CHUNK_SIZE + (int64_t)y + f->dy,
+                        (int64_t)pos.z * CHUNK_SIZE + (int64_t)z + f->dz);
 
                     if (BLOCK_DEFS[nb].opaque) continue;  // 　埋まっている
 
@@ -86,8 +88,8 @@ void render_mesh_chunk(World *world, ChunkPos pos) {
             }
         }
 
-        free(cache.chunks);
     }
+    free(cache.chunks);
 }
 
 void render_chunk(Window *window, Chunk *chunk) {
@@ -160,17 +162,17 @@ ChunkCache gen_chunkcache(World *world, int64_t x_start, int64_t y_start, int64_
 }
 
 Blocks chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z) {
-    int64_t chunk_x = floor_div16(x);
-    int64_t chunk_y = floor_div16(y);
-    int64_t chunk_z = floor_div16(z);
+    int64_t chunk_x = chunk_floor_div(x);
+    int64_t chunk_y = chunk_floor_div(y);
+    int64_t chunk_z = chunk_floor_div(z);
 
-    int64_t in_x = floor_mod16(x);
-    int64_t in_y = floor_mod16(y);
-    int64_t in_z = floor_mod16(z);
+    int64_t in_x = chunk_floor_mod(x);
+    int64_t in_y = chunk_floor_mod(y);
+    int64_t in_z = chunk_floor_mod(z);
 
-    size_t index_x = chunk_x - cache->chunk_x;
-    size_t index_y = chunk_y - cache->chunk_x;
-    size_t index_z = chunk_z - cache->chunk_x;
+    int64_t index_x = chunk_x - cache->chunk_x;
+    int64_t index_y = chunk_y - cache->chunk_y;
+    int64_t index_z = chunk_z - cache->chunk_z;
 
     if (index_x < 0 || index_x >= cache->width || index_y < 0 || index_y >= cache->height ||
         index_z < 0 || index_z >= cache->depth) {
@@ -180,6 +182,8 @@ Blocks chunkcache_get_block(ChunkCache *cache, int64_t x, int64_t y, int64_t z) 
     size_t t_index = chunkcache_index(index_x, index_y, index_z, cache->width, cache->depth);
 
     Chunk *chunk = cache->chunks[t_index];
+    if (!chunk || chunk->state == CHUNK_REQUESTED || chunk->state == CHUNK_GENERATING)
+        return BLOCK_AIR;
 
     size_t b_index = chunk_index(in_x, in_y, in_z);
 

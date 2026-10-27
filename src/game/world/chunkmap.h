@@ -40,3 +40,22 @@ bool chunk_hash_map_remove(ChunkHashMap *map, ChunkPos key);
 Chunk *chunk_hash_map_take(ChunkHashMap *map, ChunkPos key);
 void chunk_hash_map_free(ChunkHashMap *map);
 Chunk *chunk_hash_map_iter_next(ChunkHashMap *map, ChunkHashMapIterator *iter);
+
+static inline int64_t chunk_floor_div(int64_t x) {
+    int64_t q = x / 16;
+    int64_t r = x % 16;
+    return q - (r < 0);
+}
+
+static inline int64_t chunk_floor_mod(int64_t x) {
+    int64_t r = x % 16;
+    return r < 0 ? r + 16 : r;
+}
+
+static inline ChunkPos world_pos_to_chunk(Vec3d pos) {
+    return (ChunkPos){
+        .x = chunk_floor_div(pos.x),
+        .y = chunk_floor_div(pos.y),
+        .z = chunk_floor_div(pos.z),
+    };
+}

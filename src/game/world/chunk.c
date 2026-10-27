@@ -1,13 +1,14 @@
 #include "chunk.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 Chunk *chunk_new() {
-    Chunk *chunk = malloc(sizeof(Chunk));
-    if (!chunk) return NULL;
+    Chunk *chunk = malloc_or_exit(sizeof(Chunk));
 
-    memset(chunk, 0, sizeof(*chunk));
+    *chunk = (Chunk){
+        .vertices = VEC_INIT(TerrainVertexIn),
+        .indices = VEC_INIT(int),
+    };
     chunk->state = CHUNK_REQUESTED;
 
     chunk->blocks = malloc_or_exit(CHUNK_DATA_SIZE * sizeof(Blocks));

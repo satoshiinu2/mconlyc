@@ -31,14 +31,3 @@ typedef struct {
 
 Chunk *chunk_new();
 void chunk_destroy(Chunk *chunk);
-
-static inline int64_t floor_div16(int64_t x) {
-    int64_t q = x / 16;
-    int64_t r = x % 16;
-    return q - (r < 0);
-}
-
-static inline int64_t floor_mod16(int64_t x) {
-    int64_t r = x % 16;
-    return r < 0 ? r + 16 : r;
-}

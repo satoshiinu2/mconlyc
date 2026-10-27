@@ -1,8 +1,7 @@
-#include "loader.h"
+#include "chunk_loader.h"
 
 #include "../render/chunk.h"
 #include "chunk.h"
-#include "core/raster.h"
 #include "game/world/chunkmap.h"
 #include "world.h"
 
@@ -32,7 +31,7 @@ static void generate_chunk(World *world, Chunk *chunk, ChunkPos pos) {
     chunk->state = CHUNK_DATA_READY;
 }
 
-static void mesh_chunk(World *world, Chunk *chunk, ChunkPos pos) {
+static void try_mesh_chunk(World *world, Chunk *chunk, ChunkPos pos) {
     if (!chunk) return;
     if (chunk->state == CHUNK_DATA_READY) {
         render_mesh_chunk(world, pos);
@@ -40,7 +39,9 @@ static void mesh_chunk(World *world, Chunk *chunk, ChunkPos pos) {
     }
 }
 
-static void process_generation_queue(ChunkLoader *loader, World *world, size_t budget) {
+static void process_generation_queue(World *world, size_t budget) {
+    ChunkLoader *loader = world->chunk_loader;
+
     size_t processed = 0;
     while (processed < budget && loader->request_head < loader->requests.len) {
         ChunkPos pos = loader->requests.data[loader->request_head];
@@ -53,20 +54,24 @@ static void process_generation_queue(ChunkLoader *loader, World *world, size_t b
     }
 }
 
-static void process_mesh_queue(ChunkLoader *loader, World *world, size_t budget) {
+static void process_mesh_queue(World *world, size_t budget) {
+    ChunkLoader *loader = world->chunk_loader;
+
     size_t processed = 0;
-    while (processed < budget && loader->request_head < loader->requests.len) {
-        ChunkPos pos = loader->requests.data[loader->request_head];
+    while (processed < budget && loader->mesh_head < loader->request_head) {
+        ChunkPos pos = loader->requests.data[loader->mesh_head];
         Chunk *chunk = chunk_hash_map_get(&world->chunks, pos);
         if (chunk && chunk->state == CHUNK_DATA_READY) {
-            mesh_chunk(world, chunk, pos);
+            try_mesh_chunk(world, chunk, pos);
         }
-        loader->request_head++;
+        loader->mesh_head++;
         processed++;
     }
 }
 
-static bool chunk_loader_request_chunk(ChunkLoader *loader, World *world, ChunkPos pos) {
+static bool chunk_loader_request_chunk(World *world, ChunkPos pos) {
+    ChunkLoader *loader = world->chunk_loader;
+
     // Already requested, generating, or loaded.
     if (chunk_hash_map_get(&world->chunks, pos) != NULL) {
         return true;
@@ -84,7 +89,9 @@ static bool chunk_loader_request_chunk(ChunkLoader *loader, World *world, ChunkP
     return true;
 }
 
-static void chunk_loader_unload_distant(ChunkLoader *loader, World *world) {
+static void chunk_loader_unload_distant(World *world) {
+    ChunkLoader *loader = world->chunk_loader;
+
     // Unload chunks that are far from the loader's center
     // Use hysteresis to avoid frequent load/unload cycles
     const int64_t hysteresis = 2;
@@ -119,8 +126,10 @@ static void chunk_loader_unload_distant(ChunkLoader *loader, World *world) {
     free(to_unload.data);
 }
 
-void chunk_loader_update(ChunkLoader *loader, World *world, Vec3d center) {
-    ChunkLoader *l = loader;
+void chunk_loader_update(World *world, ChunkPos center) {
+    ChunkLoader *l = world->chunk_loader;
+    l->center = center;
+
     for (int64_t z = center.z - l->rd_z; z <= center.z + l->rd_z; z++) {
         for (int64_t y = center.y - l->rd_y; y <= center.y + l->rd_y; y++) {
             for (int64_t x = center.x - l->rd_x; x <= center.x + l->rd_x; x++) {
@@ -130,33 +139,38 @@ void chunk_loader_update(ChunkLoader *loader, World *world, Vec3d center) {
                     continue;
                 }
 
-                chunk_loader_request_chunk(loader, world, pos);
+                chunk_loader_request_chunk( world, pos);
             }
         }
     }
-}
-void chunk_loader_process(ChunkLoader *loader, World *world) {
-    process_generation_queue(loader, world, loader->gen_budget);
 
-    process_mesh_queue(loader, world, loader->mesh_budget);
+    chunk_loader_unload_distant(world);
+}
+
+void chunk_loader_process(World *world) {
+    ChunkLoader *loader = world->chunk_loader;
+
+    process_generation_queue(world, loader->gen_budget);
+
+    process_mesh_queue(world, loader->mesh_budget);
 }
 
 ChunkLoader *chunk_loader_new(World *world) {
-    ChunkLoader *loader = malloc(sizeof(*loader));
-    if (!loader) return NULL;
+    ChunkLoader *loader = malloc_or_exit(sizeof(*loader));
 
     // Initialize vector
-    loader->requests = (ChunkRequestQueue)VEC_INIT(ChunkRequestQueue);
+    loader->requests = (ChunkRequestQueue)VEC_INIT(ChunkPos);
 
     loader->request_head = 0;
+    loader->mesh_head = 0;
 
     loader->center.x = 0;
     loader->center.y = 0;
     loader->center.z = 0;
 
-    loader->rd_x = 0;
+    loader->rd_x = 1;
     loader->rd_y = 0;
-    loader->rd_z = 0;
+    loader->rd_z = 1;
 
     loader->gen_budget = 1;
     loader->mesh_budget = 1;

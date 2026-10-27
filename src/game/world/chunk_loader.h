@@ -1,12 +1,15 @@
+#pragma once
+
 #include "chunkmap.h"
 #include "core/raster.h"
 #include "world.h"
 
 typedef VEC(ChunkPos) ChunkRequestQueue;
 
-struct ChunkLoader {
+typedef struct ChunkLoader {
     ChunkRequestQueue requests;
     size_t request_head;
+    size_t mesh_head;
 
     ChunkPos center;
     int rd_x;
@@ -15,14 +18,12 @@ struct ChunkLoader {
 
     size_t gen_budget;
     size_t mesh_budget;
-};
+} ChunkLoader;
 
 ChunkLoader *chunk_loader_new(World *world);
 
-void chunk_loader_update(ChunkLoader *loader, World *world, Vec3d center);
+void chunk_loader_update(World *world, ChunkPos center);
 
-void chunk_loader_process(ChunkLoader *loader, World *world);
-
-void chunk_loader_unload_distant(ChunkLoader *loader, World *world);
+void chunk_loader_process(World *world);
 
 void chunk_loader_free(ChunkLoader *loader);

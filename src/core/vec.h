@@ -10,7 +10,7 @@
            "Vector type size mismatch. Ensure that the vector is initialized with VEC_INIT(T) " \
            "and that the type T matches the vector's data type.");
 #else
-#define VEC_ASSERT_SIZE(vec) ()
+#define VEC_ASSERT_SIZE(vec) ((void)0)
 #endif
 
 #ifdef DEBUG
@@ -51,6 +51,20 @@
         VEC_ASSERT_SIZE(vec);                                         \
         assert((size_t)(index) < (vec).len && "Index out of bounds"); \
     } while (0), (*(assert((size_t)(index) < (vec).len, &(vec).data[(index)])))
+
+// Removes an element in O(1) by moving the last element into its slot.
+// Order is not preserved. index is evaluated once; vec must have no side effects.
+#define VEC_SWAP_REMOVE(vec, index)                                      \
+    do {                                                                \
+        VEC_ASSERT_SIZE(vec);                                           \
+        size_t vec_swap_remove_index_ = (size_t)(index);                 \
+        assert(vec_swap_remove_index_ < (vec).len && "Index out of bounds"); \
+        size_t vec_swap_remove_last_ = (vec).len - 1;                    \
+        if (vec_swap_remove_index_ != vec_swap_remove_last_) {           \
+            (vec).data[vec_swap_remove_index_] = (vec).data[vec_swap_remove_last_]; \
+        }                                                               \
+        (vec).len = vec_swap_remove_last_;                              \
+    } while (0)
 
 #define VEC_FREE(vec)              \
     do {                           \

@@ -171,7 +171,9 @@ void chunk_hash_map_free(ChunkHashMap *map) {
     }
 
     free(map->entries);
-    free(map);
+    map->entries = NULL;
+    map->cap = 0;
+    map->count = 0;
 }
 
 Chunk *chunk_hash_map_iter_next(ChunkHashMap *map, ChunkHashMapIterator *iter) {
